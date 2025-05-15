@@ -1,0 +1,158 @@
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import "@fontsource/roboto";
+
+const allItems = [
+  "Pirotecnia", "Mudança de nota", "Máquina de vento","BDSM KINKY OOOOH","Máquina de fumo", "Adereço gigante questionável", "free feet pics (artista descalç)",
+  "glitter glitter glitter", "Letra política", "Dueto", "Instrumento estranho","Voice crack","Nota extra longa","Canção bilíngue",
+  "Balada dramática desnecessária", "Língua nativa", "Fato de animal","Asas", "Coreografia intensa", "Artista a chorar","PIANO","Fenómeno meteorológico",
+  "Câmara aérea", "Luzes epilépticas", "Roupa prateada/dourada", "Apresentador(es) awkward", "Ovação em pé","Filtro na câmara (PB, sépia...)",
+  "Hino à paz", "Referência à guerra","Free Palestine 🇵🇸","Solo guitarra","Mudança de estilo inesperada","#free the nipple",
+  "Banda ao vivo","Verka Serduchka","UK ou DE em último","isto é meio gay...", "Erro técnico","Portugal nos últimos 5","FUCK ISRAEL","START VOTING NOW",
+  "Falha de som","Douze points","CHA CHA CHA","Saxofone/Violino","Artista canta deitad","Artista levantad por dançarinos",
+  "Dança tradicional", "Anos 70/80", "Artista muda de roupa","Artista suspenso/voa",  "Performance minimalista", "Vestido volumoso", "LOVE LOVE PEACE PEACE","Flashback","Thank you, Merci, Gracias, Obrigado",
+  "Chapéu","Yodel","BEIJO!","Apresentador muda de roupa","Momento je ne parle pas","Good morning Australia",
+];
+
+function getRandomItems(array, count) {
+  const shuffled = [...array].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
+export default function EurovisionBingo() {
+  const [bingoItems, setBingoItems] = useState([]);
+  const [bingo, setBingo] = useState({});
+  const [showDrink, setShowDrink] = useState(false);
+  const [showBingo, setShowBingo] = useState(false);
+  const [showAlmost, setShowAlmost] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const initializeGame = () => {
+    const items = getRandomItems(allItems, 10);
+    const initialState = items.reduce((acc, item) => {
+      acc[item] = false;
+      return acc;
+    }, {});
+    setBingoItems(items);
+    setBingo(initialState);
+    localStorage.setItem("eurovision-bingo-items", JSON.stringify(items));
+    localStorage.setItem("eurovision-bingo-state", JSON.stringify(initialState));
+    setShowBingo(false);
+  };
+
+  useEffect(() => {
+    const storedItems = localStorage.getItem("eurovision-bingo-items");
+    const storedState = localStorage.getItem("eurovision-bingo-state");
+    if (storedItems && storedState) {
+      setBingoItems(JSON.parse(storedItems));
+      setBingo(JSON.parse(storedState));
+    } else {
+      initializeGame();
+    }
+  }, []);
+
+  useEffect(() => {
+    if (bingoItems.length > 0) {
+      localStorage.setItem("eurovision-bingo-state", JSON.stringify(bingo));
+      const checkedCount = bingoItems.filter((item) => bingo[item]).length;
+      setShowBingo(checkedCount === bingoItems.length);
+      setShowAlmost(checkedCount === bingoItems.length - 1);
+    }
+  }, [bingo, bingoItems]);
+
+  const handleCheck = (item, val) => {
+    setBingo((prev) => ({ ...prev, [item]: val }));
+    if (val) {
+      setShowDrink(true);
+      setTimeout(() => setShowDrink(false), 1500);
+    }
+  };
+
+  const closeBingo = () => setShowBingo(false);
+  const closeAlmost = () => setShowAlmost(false);
+
+  return (
+    <div className={`p-4 sm:p-6 space-y-6 relative min-h-screen transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`} style={{ fontFamily: 'Roboto, sans-serif' }}>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl sm:text-3xl font-bold text-center w-full">🎯 Bingo Eurovisão 2025</h1>
+        <Button variant="outline" onClick={() => setDarkMode(!darkMode)} className="ml-4 text-xs">{darkMode ? "☀️" : "🌙"}</Button>
+      </div>
+
+      <div className="flex justify-center gap-4">
+        <Button onClick={() => {
+          const resetState = bingoItems.reduce((acc, item) => {
+            acc[item] = false;
+            return acc;
+          }, {});
+          setBingo(resetState);
+          localStorage.setItem("eurovision-bingo-state", JSON.stringify(resetState));
+          setShowBingo(false);
+          setShowAlmost(false);
+        }} className="mb-4">↩️ Limpar</Button>
+      </div>
+
+      <Card className={darkMode ? "bg-gray-800 text-white" : ""}>
+        <CardContent className="space-y-4 p-2 sm:p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {bingoItems.map((item) => (
+              <div key={item} className="flex items-center space-x-4 text-sm sm:text-base">
+                <Checkbox
+                  className="w-7 h-7 sm:w-8 sm:h-8"
+                  checked={bingo[item]}
+                  onCheckedChange={(val) => handleCheck(item, val)}
+                />
+                <label className="break-words cursor-pointer">{item}</label>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <AnimatePresence>
+        {showDrink && (
+          <motion.div
+            className="fixed inset-0 flex items-center justify-center text-4xl sm:text-5xl font-bold text-red-600 drop-shadow-lg bg-white/80 dark:bg-black/80 backdrop-blur-sm z-50"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+          >
+            🍻 BEBE!
+          </motion.div>
+        )}
+
+        {showBingo && (
+          <motion.div
+            className="fixed inset-0 flex flex-col justify-center items-center px-4 text-center text-4xl sm:text-5xl font-bold text-green-700 drop-shadow-lg bg-white/90 dark:bg-black/90 backdrop-blur-md z-50 space-y-4"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+          >
+            <div>
+            <p>🎉 BINGO 🎉</p>
+             <p>ESTE É DE PENALTI!</p>
+            </div>
+            <Button onClick={closeBingo} className="text-lg">X</Button>
+          </motion.div>
+        )}
+
+        {showAlmost && (
+          <motion.div
+            className="fixed inset-0 flex flex-col justify-center items-center px-4 text-center text-3xl sm:text-4xl font-bold text-blue-600 drop-shadow-lg bg-white/90 dark:bg-black/90 backdrop-blur-md z-50 space-y-4"
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.7 }}
+          >
+            <div className="text-blue-800 dark:text-blue-300">
+  <p>🍻 Mais um golinho...</p>
+  <p>É altura de encher o copo e preparar o grande final!</p>
+</div>
+            <Button onClick={closeAlmost} className="text-lg">X</Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
